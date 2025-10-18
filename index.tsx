@@ -19,14 +19,44 @@ interface ReportData {
   pathwayImage: string;
 }
 
+// --- UTILITY FUNCTIONS ---
+
+/**
+ * Escapes HTML special characters in a string to prevent XSS attacks.
+ * @param str The string to escape.
+ * @returns The escaped string.
+ */
+function escapeHTML(str: string): string {
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+/**
+ * Sanitizes a URL to ensure it uses a safe protocol.
+ * @param url The URL to sanitize.
+ * @returns A safe URL or '#' as a fallback.
+ */
+function sanitizeURL(url: string): string {
+    const trimmedUrl = url.trim();
+    if (trimmedUrl.startsWith('https://') || trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('#')) {
+        return trimmedUrl;
+    }
+    return '#';
+}
+
+
 // --- INITIAL STATE ---
 const reportData: ReportData = {
   studentName: "Abqari Muhammad",
   moduleTopic: "Matematika Junior",
   trainingDuration: "Bulan ke-1",
   projectLink: "#",
-  referralLink: "#",
-  moduleLink: "#",
+  referralLink: "https://algonova.id/invite?utm_source=refferal&utm_medium=employee&utm_campaign=social_network&utm_content=atama520",
+  moduleLink: "https://drive.google.com/drive/u/0/folders/1lErW_RKjHOkAgqCr9yymELg3yUZzvBEb",
   attendance: "Abqari Muhammad selalu hadir di setiap sesi pelajaran dan menunjukkan antusiasme yang tinggi. Kami sangat menghargai kehadirannya yang konsisten, ini adalah langkah penting dalam proses belajarnya. Terus semangat, ya!",
   engagement: "Abqari Muhammad sangat terlibat dalam setiap sesi, aktif berpartisipasi dalam diskusi, dan tidak ragu mengajukan pertanyaan yang mendalam. Abqari Muhammad selalu menunjukkan kemajuan yang baik dan memahami materi dengan cepat. Saya sering memberikan tantangan tambahan untuk membantu Abqari Muhammad terus berkembang dan belajar lebih jauh.",
   taskCompletion: "Abqari Muhammad telah berhasil menyelesaikan semua tugas dengan sangat baik. Pemahamannya terhadap materi sangat jelas, dan Abqari Muhammad mampu menyelesaikan setiap tugas tepat waktu. Senang sekali melihat kemajuannya yang terus meningkat. Terus lanjutkan usaha ini, ya!",
@@ -43,6 +73,11 @@ const exportPdfButton = document.getElementById('export-pdf') as HTMLButtonEleme
 const viewEditorBtn = document.getElementById('view-editor-btn') as HTMLButtonElement;
 const viewPreviewBtn = document.getElementById('view-preview-btn') as HTMLButtonElement;
 const formPanel = document.getElementById('form-container') as HTMLDivElement;
+// New elements for the guide modal
+const generatePdfGuideBtn = document.getElementById('generate-pdf-guide-btn') as HTMLButtonElement;
+const pdfGuideModal = document.getElementById('pdf-guide-modal') as HTMLDivElement;
+const closeModalBtn = document.getElementById('close-modal-btn') as HTMLButtonElement;
+const modalBody = document.getElementById('modal-body') as HTMLDivElement;
 
 
 // --- TEMPLATES & DATA for FORM ---
@@ -74,15 +109,19 @@ const assessmentOptions = {
  * Renders the entire form into the form container.
  */
 function renderForm() {
+    const safeStudentNameForLabel = escapeHTML(reportData.studentName);
 
     const createRadioGroup = (name: keyof typeof assessmentOptions, title: string) => {
         const optionsHtml = assessmentOptions[name].map((opt, index) => {
             const id = `${name}-${index}`;
+            // Comparison logic uses raw data
             const isChecked = opt.value.replace(/STUDENT_NAME/g, reportData.studentName) === reportData[name];
+            // Text for rendering is escaped to prevent XSS
+            const labelText = opt.value.replace(/STUDENT_NAME/g, safeStudentNameForLabel);
             return `
                 <div class="radio-option">
                     <input type="radio" id="${id}" name="${name}" value="${opt.value}" ${isChecked ? 'checked' : ''}>
-                    <label for="${id}" data-template="${opt.value}">${opt.value.replace(/STUDENT_NAME/g, reportData.studentName)}</label>
+                    <label for="${id}" data-template="${opt.value}">${labelText}</label>
                 </div>
             `;
         }).join('');
@@ -94,21 +133,21 @@ function renderForm() {
         <fieldset>
             <legend>Informasi Siswa & Laporan</legend>
             <label for="studentName">Nama Siswa</label>
-            <input type="text" id="studentName" name="studentName" value="${reportData.studentName}">
+            <input type="text" id="studentName" name="studentName" value="${escapeHTML(reportData.studentName)}">
             <label for="moduleTopic">Kursus</label>
-            <input type="text" id="moduleTopic" name="moduleTopic" value="${reportData.moduleTopic}">
+            <input type="text" id="moduleTopic" name="moduleTopic" value="${escapeHTML(reportData.moduleTopic)}">
             <label for="trainingDuration">Lama Pelatihan</label>
-            <input type="text" id="trainingDuration" name="trainingDuration" value="${reportData.trainingDuration}">
+            <input type="text" id="trainingDuration" name="trainingDuration" value="${escapeHTML(reportData.trainingDuration)}">
             <label for="tutorName">Laporan dibuat oleh</label>
-            <input type="text" id="tutorName" name="tutorName" value="${reportData.tutorName}">
+            <input type="text" id="tutorName" name="tutorName" value="${escapeHTML(reportData.tutorName)}">
         </fieldset>
 
         <fieldset>
             <legend>Detail Modul</legend>
             <label for="moduleSummary">Hasil (Deskripsi Modul)</label>
-            <textarea id="moduleSummary" name="moduleSummary" rows="8">${reportData.moduleSummary}</textarea>
+            <textarea id="moduleSummary" name="moduleSummary" rows="8">${escapeHTML(reportData.moduleSummary)}</textarea>
             <label for="skillsGained">Keahlian yang Didapatkan (satu per baris)</label>
-            <textarea id="skillsGained" name="skillsGained" rows="6">${reportData.skillsGained}</textarea>
+            <textarea id="skillsGained" name="skillsGained" rows="6">${escapeHTML(reportData.skillsGained)}</textarea>
         </fieldset>
         
         <fieldset>
@@ -122,11 +161,11 @@ function renderForm() {
         <fieldset>
             <legend>Links & Assets</legend>
             <label for="projectLink">Project Link</label>
-            <input type="text" id="projectLink" name="projectLink" value="${reportData.projectLink}">
+            <input type="text" id="projectLink" name="projectLink" value="${escapeHTML(reportData.projectLink)}">
             <label for="referralLink">Referral Link (for Free Lesson)</label>
-            <input type="text" id="referralLink" name="referralLink" value="${reportData.referralLink}">
+            <input type="text" id="referralLink" name="referralLink" value="${escapeHTML(reportData.referralLink)}">
             <label for="moduleLink">Module Link (Footer)</label>
-            <input type="text" id="moduleLink" name="moduleLink" value="${reportData.moduleLink}">
+            <input type="text" id="moduleLink" name="moduleLink" value="${escapeHTML(reportData.moduleLink)}">
             <label for="pathwayImage">Gambar Jalur Pendidikan</label>
             <input type="file" id="pathwayImage" name="pathwayImage" accept="image/*" class="file-input-hidden">
             <label for="pathwayImage" class="file-input-label">Import Gambar</label>
@@ -136,11 +175,29 @@ function renderForm() {
 
 /**
  * Calculates a star rating based on assessment selections.
+ * This version uses a weighted scoring system for more nuance.
  * @returns A number from 1 to 5.
  */
 function calculateStarRating(): number {
-    let score = 0;
+    // Define points for each option based on its index (0 is best).
+    // The scores range from 5 (excellent) to 1 (needs improvement).
+    const categoryScores = {
+        attendance: [5, 4, 3, 2, 1], // 5 options
+        engagement: [5, 4, 2, 1],     // 4 options
+        taskCompletion: [5, 3, 1]      // 3 options
+    };
+
+    // Define weights for each category to emphasize their relative importance.
+    // The sum of weights should be 1.0.
+    const categoryWeights = {
+        attendance: 0.20,
+        engagement: 0.30,
+        taskCompletion: 0.50,
+    };
+
+    let totalWeightedScore = 0;
     const categories: (keyof typeof assessmentOptions)[] = ['attendance', 'engagement', 'taskCompletion'];
+
     categories.forEach(category => {
         const selectedValue = reportData[category];
         const selectedOptionIndex = assessmentOptions[category].findIndex(opt => {
@@ -148,31 +205,19 @@ function calculateStarRating(): number {
         });
 
         if (selectedOptionIndex !== -1) {
-            switch(category) {
-                case 'attendance':
-                    if (selectedOptionIndex === 0) score += 3;
-                    else if (selectedOptionIndex === 1) score += 2;
-                    else score += 1;
-                    break;
-                case 'engagement':
-                     if (selectedOptionIndex === 0) score += 3;
-                    else if (selectedOptionIndex === 1) score += 2;
-                    else score += 1;
-                    break;
-                case 'taskCompletion':
-                    if (selectedOptionIndex === 0) score += 4;
-                    else if (selectedOptionIndex === 1) score += 2;
-                    else score += 1;
-                    break;
-            }
+            // Get the score for the selected option, defaulting to 0 if not found.
+            const score = categoryScores[category][selectedOptionIndex] || 0;
+            const weight = categoryWeights[category];
+            totalWeightedScore += score * weight;
         }
     });
 
-    if (score >= 9) return 5;
-    if (score >= 7) return 4;
-    if (score >= 5) return 3;
-    if (score >= 4) return 2;
-    return 1;
+    // The total weighted score will be between 1 and 5.
+    // We round it to the nearest whole number to determine the star rating.
+    // We also clamp the value between 1 and 5 as a safeguard.
+    const finalRating = Math.round(Math.max(1, Math.min(5, totalWeightedScore)));
+
+    return finalRating;
 }
 
 
@@ -181,7 +226,25 @@ function calculateStarRating(): number {
  */
 function renderReport() {
     const data = reportData;
-    const skillsList = data.skillsGained.split('\n').map(skill => `<li>${skill.trim()}</li>`).join('');
+
+    // --- Sanitize and format data for safe rendering ---
+    const safeStudentName = escapeHTML(data.studentName);
+    const safeModuleTopic = escapeHTML(data.moduleTopic);
+    const safeTrainingDuration = escapeHTML(data.trainingDuration);
+    const safeTutorName = escapeHTML(data.tutorName);
+    const formattedModuleSummary = escapeHTML(data.moduleSummary).replace(/\n/g, '<br>');
+    const safeAttendance = escapeHTML(data.attendance);
+    const safeEngagement = escapeHTML(data.engagement);
+    const safeTaskCompletion = escapeHTML(data.taskCompletion);
+    const safeProjectLink = escapeHTML(sanitizeURL(data.projectLink));
+    const safeReferralLink = escapeHTML(sanitizeURL(data.referralLink));
+    const safeModuleLink = escapeHTML(sanitizeURL(data.moduleLink));
+
+    const skillsList = data.skillsGained.split('\n')
+        .map(skill => skill.trim())
+        .filter(skill => skill) // BUG FIX: Filter out empty lines
+        .map(skill => `<li>${escapeHTML(skill)}</li>`).join('');
+
     const starRating = calculateStarRating();
     const starsHtml = Array.from({ length: 5 }, (_, i) => `
         <svg class="star-icon ${i < starRating ? 'filled' : ''}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
@@ -198,15 +261,15 @@ function renderReport() {
                     <h3>Informasi Siswa</h3>
                     <div class="info-item">
                         <span class="info-label">Nama:</span>
-                        <span class="info-value">${data.studentName}</span>
+                        <span class="info-value">${safeStudentName}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Kursus:</span>
-                        <span class="info-value">${data.moduleTopic}</span>
+                        <span class="info-value">${safeModuleTopic}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Lama Pelatihan:</span>
-                        <span class="info-value">${data.trainingDuration}</span>
+                        <span class="info-value">${safeTrainingDuration}</span>
                     </div>
                 </div>
                 <div class="report-card score-card">
@@ -218,14 +281,14 @@ function renderReport() {
                     <h4><span class="card-icon">💻</span> Proyek hasil Student</h4>
                     <div class="card-content">
                         <p>Proyek akhir diakses melalui link dibawah ini:</p>
-                        <a href="${data.projectLink}">🔗 Proyek Akhir Bulan Ini</a>
+                        <a href="${safeProjectLink}">🔗 Proyek Akhir Bulan Ini</a>
                     </div>
                 </div>
                 <div class="report-card lesson-card">
                      <h4><span class="card-icon">🎁</span> Free Lesson</h4>
                      <div class="card-content">
                         <p>🙋 Mau dapatkan free lesson?</p>
-                        <a href="${data.referralLink}">👉 Bagikan link ini dan dapatkan reward class gratis!</a>
+                        <a href="${safeReferralLink}">👉 Bagikan link ini dan dapatkan reward class gratis!</a>
                     </div>
                 </div>
             </div>
@@ -235,12 +298,12 @@ function renderReport() {
                     <div class="large-card-content">
                         <div class="module-item">
                             <span class="module-label">Topik Modul</span>
-                            <span class="info-value-static">${data.moduleTopic}</span>
+                            <span class="info-value-static">${safeModuleTopic}</span>
                         </div>
                         <div class="module-item">
                             <span class="module-label">Hasil:</span>
                         </div>
-                        <p class="module-summary">${data.moduleSummary}</p>
+                        <p class="module-summary">${formattedModuleSummary}</p>
                     </div>
                 </div>
                 <div class="large-card">
@@ -254,9 +317,9 @@ function renderReport() {
                  <div class="large-card">
                     <h4><span class="card-icon">📝</span> Tutor's Feedback</h4>
                      <div class="large-card-content feedback-content">
-                        <p>${data.attendance}</p>
-                        <p>${data.engagement}</p>
-                        <p>${data.taskCompletion}</p>
+                        <p>${safeAttendance}</p>
+                        <p>${safeEngagement}</p>
+                        <p>${safeTaskCompletion}</p>
                      </div>
                  </div>
                  <div class="large-card pathway">
@@ -268,18 +331,50 @@ function renderReport() {
              </div>
         </div>
         <div class="report-footer">
-             <a href="${data.moduleLink}" class="footer-link">👉 Lihat Modul Lengkap</a>
-            <span class="footer-credit">Laporan dibuat oleh: ${data.tutorName}</span>
+             <a href="${safeModuleLink}" class="footer-link">👉 Lihat Modul Lengkap</a>
+            <span class="footer-credit">Laporan dibuat oleh: ${safeTutorName}</span>
         </div>
     `;
 }
+
+/**
+ * Uses Gemini to generate instructions for saving a PDF and displays them in a modal.
+ */
+async function generatePdfInstructions() {
+    modalBody.innerHTML = '<p>Generating instructions with AI...</p>';
+    pdfGuideModal.classList.remove('view-hidden');
+
+    try {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const prompt = `Please provide simple, friendly, and concise instructions for a user on how to save a student report for '${reportData.studentName}' as a PDF from their browser.
+        
+        Explain these three steps clearly in Indonesian:
+        1. Click the 'Save as PDF' button in the top header.
+        2. When the print preview window opens, find the 'Destination' or 'Printer' dropdown.
+        3. Select 'Save as PDF' from the list instead of a physical printer, and then click the 'Save' button.
+        
+        Keep the tone helpful and encouraging.`;
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+        });
+        
+        modalBody.innerHTML = escapeHTML(response.text).replace(/\n/g, '<br>');
+
+    } catch (error) {
+        console.error("Error generating PDF instructions:", error);
+        modalBody.innerHTML = '<p>Sorry, we couldn\'t generate instructions at the moment. Please try again later.</p><p><b>Standard Instructions:</b><br>1. Click "Save as PDF".<br>2. In the print dialog, change the destination printer to "Save as PDF".<br>3. Click "Save".</p>';
+    }
+}
+
 
 /**
  * Binds event listeners to the form elements.
  */
 function addEventListeners() {
     formContainer.addEventListener('input', (e) => {
-        const target = e.target as HTMLInputElement;
+        const target = e.target as HTMLInputElement | HTMLTextAreaElement;
         const name = target.name as keyof ReportData;
         
         if (name in reportData) {
@@ -292,7 +387,7 @@ function addEventListeners() {
                         reportData[radioName] = radio.value.replace(/STUDENT_NAME/g, target.value);
                     }
                 });
-                render(); // Full re-render needed to update radio labels
+                render(); // Full re-render needed to update radio labels and values
             } else {
                 renderReport(); // For other fields, just update the preview
             }
@@ -336,6 +431,19 @@ function addEventListeners() {
         viewEditorBtn.classList.remove('active');
         formPanel.classList.add('view-hidden');
         reportContainer.classList.remove('view-hidden');
+    });
+
+    // --- Listeners for the new modal ---
+    generatePdfGuideBtn.addEventListener('click', generatePdfInstructions);
+
+    closeModalBtn.addEventListener('click', () => {
+        pdfGuideModal.classList.add('view-hidden');
+    });
+
+    pdfGuideModal.addEventListener('click', (e) => {
+        if (e.target === pdfGuideModal) {
+            pdfGuideModal.classList.add('view-hidden');
+        }
     });
 }
 

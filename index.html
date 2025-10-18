@@ -38,12 +38,24 @@
             <header class="form-header">
                 <h2>Report Editor</h2>
                 <p>Fill in the details below. The preview will update automatically.</p>
+                <button type="button" id="generate-pdf-guide-btn" class="info-button">How to Save as PDF?</button>
             </header>
             <form id="report-form">
                 <!-- Form sections will be injected here by the script -->
             </form>
         </div>
     </div>
+    
+    <div id="pdf-guide-modal" class="modal-overlay view-hidden non-printable">
+        <div class="modal-content">
+            <button id="close-modal-btn" class="close-button">&times;</button>
+            <h3>Saving Your Report as a PDF</h3>
+            <div id="modal-body">
+                <!-- AI-generated content will go here -->
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="index.tsx"></script>
 </body>
 </html>
