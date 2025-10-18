@@ -1,0 +1,103 @@
+/* Styles for printing the report */
+@media print {
+    body {
+        background-color: #fff;
+        font-size: 10pt; /* Adjust font size for better fit on A4 */
+    }
+
+    /* Hide the form editor and any other non-printable elements */
+    .non-printable {
+        display: none !important;
+    }
+
+    #app-container {
+        display: block;
+        height: auto;
+        overflow: visible !important;
+    }
+
+    .report-preview {
+        padding: 0 !important;
+        background-color: #fff !important;
+    }
+
+    #report-container {
+        display: block !important; /* Ensure report is visible for printing */
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        box-shadow: none !important;
+        border: none;
+    }
+    
+    .report-header {
+        background: linear-gradient(90deg, #D8B5FF 0%, #90E0EF 100%) !important;
+        color: white !important;
+    }
+
+    .report-body {
+        padding: 1rem 0; /* Reduce padding for print */
+    }
+
+    .report-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        page-break-inside: avoid;
+    }
+    
+    .report-grid-single-col {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        page-break-inside: avoid;
+    }
+
+    /* Avoid page breaks inside all cards */
+    .report-card, .large-card {
+        page-break-inside: avoid;
+        border: 1px solid #ccc !important;
+        box-shadow: none !important;
+        border-radius: 8px !important;
+    }
+    
+    /* Ensure colors print correctly */
+    .info-card, .score-card {
+        background-color: #E9E6F8 !important;
+    }
+    .project-card, .lesson-card {
+        background-color: #FEF9E7 !important;
+    }
+    .star-rating {
+        background-color: #F8F9F9 !important;
+    }
+    
+    /* Force browser to print background colors and images */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+
+    a {
+        text-decoration: none !important;
+        color: #4A90E2 !important;
+    }
+    
+    .report-footer {
+        background-color: #333 !important;
+        color: #fff !important;
+        width: 100%;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        box-sizing: border-box;
+        padding: 0.75rem 1.5rem;
+        margin-top: 1.5rem; /* Add some margin for spacing */
+        page-break-inside: avoid; /* Prevent footer from breaking across pages */
+    }
+
+    .footer-link {
+        color: #AAB9FF !important;
+    }
+
+}

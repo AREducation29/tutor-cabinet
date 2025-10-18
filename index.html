@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Report Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="print.css" media="print">
+<script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.25.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/"
+  }
+}
+</script>
+</head>
+<body>
+    <div id="app-header" class="non-printable">
+        <div class="header-content">
+            <div id="view-switcher">
+                <button id="view-editor-btn" class="view-btn active">Editor</button>
+                <button id="view-preview-btn" class="view-btn">Preview</button>
+            </div>
+            <button type="button" id="export-pdf" class="cta-button">Save as PDF</button>
+        </div>
+    </div>
+    <div id="app-container">
+        <div id="report-container" class="report-preview view-hidden">
+            <!-- Report preview will be rendered here -->
+        </div>
+        <div id="form-container" class="form-panel non-printable">
+            <header class="form-header">
+                <h2>Report Editor</h2>
+                <p>Fill in the details below. The preview will update automatically.</p>
+            </header>
+            <form id="report-form">
+                <!-- Form sections will be injected here by the script -->
+            </form>
+        </div>
+    </div>
+    <script type="module" src="index.tsx"></script>
+</body>
+</html>
